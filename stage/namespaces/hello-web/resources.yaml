@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: hello-web
+    role: backend
+  name: hello-web-app
+spec:
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: hello-web
+    role: backend
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: hello-web
+    role: backend
+  name: hello-web-app
+spec:
+  selector:
+    matchLabels:
+      app: hello-web
+      role: backend
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: hello-web
+        role: backend
+      name: app
+    spec:
+      containers:
+      - env:
+        - name: ENVIRONMENT
+          value: dev
+        - name: LOG_LEVEL
+          value: info
+        image: gcr.io/qwiklabs-gcp-01-04a7321ccd7a/hello-web:348267b@sha256:8e2c873197b33379570e381a32db950ec0313dbb2d963928e0a0be0e41edb3c1
+        name: app
+        ports:
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 1
+          periodSeconds: 1
+        resources:
+          limits:
+            cpu: 100m
+            memory: 256Mi
+          requests:
+            cpu: 25m
+            memory: 64Mi
